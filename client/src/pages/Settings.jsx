@@ -93,7 +93,7 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
       content: (
         <div style={{ padding: '8px 0' }}>
           <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
-            LectureVault is a centralized lecture repository for students to access past, current, and upcoming lecture materials.
+            ACdex is a centralized lecture repository for students to access past, current, and upcoming lecture materials.
           </p>
           <div style={{ display: 'grid', gap: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -135,7 +135,7 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
           <div style={{ width: 80, height: 80, borderRadius: '50%', background: `linear-gradient(135deg, ${t.accent}, #8b5cf6)`, margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>
             📚
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>LectureVault</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>ACdex</h2>
           <p style={{ color: t.sub, fontSize: 13 }}>{isLogin ? 'Welcome back' : 'Create your account'}</p>
         </div>
 

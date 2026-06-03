@@ -45,7 +45,7 @@ function App() {
           justifyContent: 'space-between', alignItems: 'center',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>LectureVault</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>ACdex</h1>
           <button
             onClick={() => {
               const newDark = !dark
