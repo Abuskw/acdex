@@ -23,7 +23,7 @@ function App() {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [pdfTitle, setPdfTitle] = useState('')
 
-  const API = 'http://localhost:5000'
+  const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
   const t = dark
     ? { bg: '#0f172a', card: '#1e293b', text: '#e2e8f0', sub: '#94a3b8', border: '#334155', header: '#1e3a5f', accent: '#3b82f6', green: '#10b981', red: '#ef4444' }
     : { bg: '#f1f5f9', card: '#fff', text: '#1e293b', sub: '#64748b', border: '#e2e8f0', header: '#1e40af', accent: '#3b82f6', green: '#10b981', red: '#ef4444' }
