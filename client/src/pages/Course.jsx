@@ -14,6 +14,7 @@ function Course({ API, t, user, showToast, setPdfUrl, setPdfTitle }) {
   const [commentCount, setCommentCount] = useState(0)
 const [replyTo, setReplyTo] = useState(null)
 const [replyText, setReplyText] = useState('')
+const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   useEffect(() => {
     let cancelled = false
 
@@ -191,14 +192,20 @@ const submitReply = async (parentId) => {
                   background: t.accent, color: 'white', border: 'none',
                   padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
                 }}>View</button>
-                <button onClick={() => handleDownload(l)} style={{
-                  background: t.green, color: 'white', border: 'none',
-                  padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
-                }}>Download</button>
-                <button onClick={() => bookmark(l)} style={{
-                  background: 'transparent', border: `1px solid ${t.border}`,
-                  color: t.text, padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
-                }}>Save</button>
+                <button onClick={() => {
+  if (!user) { setShowLoginPrompt(true); return }
+  handleDownload(l)
+}} style={{
+  background: t.green, color: 'white', border: 'none',
+  padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
+}}>Download</button>
+<button onClick={() => {
+  if (!user) { setShowLoginPrompt(true); return }
+  bookmark(l)
+}} style={{
+  background: 'transparent', border: `1px solid ${t.border}`,
+  color: t.text, padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
+}}>Save</button>
               </div>
             </div>
           </div>
@@ -350,6 +357,36 @@ const submitReply = async (parentId) => {
           ))
         )}
       </BottomSheet>
+      {/* Login Prompt Modal */}
+{showLoginPrompt && (
+  <div onClick={() => setShowLoginPrompt(false)} style={{
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+  }}>
+    <div onClick={e => e.stopPropagation()} style={{
+      background: t.card, padding: 28, borderRadius: 16, textAlign: 'center', maxWidth: 320, width: '100%',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.2)', animation: 'fadeIn 0.2s ease'
+    }}>
+      <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
+      <h3 style={{ marginBottom: 8, fontSize: 18 }}>Login Required</h3>
+      <p style={{ color: t.sub, fontSize: 13, marginBottom: 20 }}>
+        You need to login to download lectures and save bookmarks.
+      </p>
+      <button onClick={() => { setShowLoginPrompt(false); nav('/settings') }} style={{
+        background: t.accent, color: 'white', border: 'none', padding: '12px 24px',
+        borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600, width: '100%'
+      }}>
+        Go to Login
+      </button>
+      <button onClick={() => setShowLoginPrompt(false)} style={{
+        background: 'transparent', border: 'none', color: t.sub,
+        padding: '10px', cursor: 'pointer', marginTop: 8, fontSize: 13
+      }}>
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
     </div>
   )
 }

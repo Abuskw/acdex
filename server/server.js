@@ -74,20 +74,65 @@ const adminAuth = (req, res, next) => {
 };
 
 // Seed data
-const facCount = db.prepare('SELECT COUNT(*) as c FROM faculties').get().c;
 if (facCount === 0) {
   const faculties = ['Faculty of Agriculture','Basic Medical Sciences','Earth and Environmental Sciences','Faculty of Education','Faculty of Humanities','Faculty of Law','Faculty of Management Sciences','Faculty of Natural and Applied Sciences','Faculty of Social Sciences'];
+  
   const depts = {
     'Faculty of Agriculture': ['Agricultural Science','Fisheries and Aquaculture','Forestry and Wildlife Management','Food Science and Technology'],
-    'Basic Medical Sciences': ['Medical Laboratory Science','Nursing Science','Physiotherapy','Medicine and Surgery'],
+    'Basic Medical Sciences': ['Medical Laboratory Science','Nursing','Physiotherapy','Medicine and Surgery'],
     'Earth and Environmental Sciences': ['Environmental Management','Geography','Meteorology'],
-    'Faculty of Education': ['Education','Special Education','Educational Psychology','Education Management','Science Education','Library Science'],
+    'Faculty of Education': ['Education','Special Education','Educational Psychology and Counseling','Education Management','Science Education','Mathematics and Computer Science Education','Library and Information Science'],
     'Faculty of Humanities': ['Arabic','English and French','Nigerian Languages','History','Islamic Studies'],
     'Faculty of Law': ['Law'],
-    'Faculty of Management Sciences': ['Accounting','Business Administration','Public Administration'],
-    'Faculty of Natural and Applied Sciences': ['Biochemistry','Biological Sciences','Chemistry','Computer Science','Mathematics','MicroBiology','Physics','Statistics'],
-    'Faculty of Social Sciences': ['Economics','Political Science','Sociology','International Relations']
+    'Faculty of Management Sciences': ['Accounting','Business Administration','Public Administration','Local Government and Development Studies'],
+    'Faculty of Natural and Applied Sciences': ['Biochemistry','Biological Sciences','Pure and Industrial Chemistry','Computer Science','Mathematics','MicroBiology','Physics','Statistics'],
+    'Faculty of Social Sciences': ['Economics','Political Science','Sociology','International Relations','Library and Information Science']
   };
+  
+  const courseData = {
+    'Education': [
+      { code: 'EDU101', title: 'B.A (Ed) Arabic', level: 100, semester: 1 },
+      { code: 'EDU102', title: 'B.A (Ed) English', level: 100, semester: 1 },
+      { code: 'EDU103', title: 'B.A (Ed) Hausa', level: 100, semester: 1 },
+      { code: 'EDU104', title: 'B.A (Ed) History', level: 100, semester: 1 },
+      { code: 'EDU105', title: 'B.A (Ed) Islamic Studies', level: 100, semester: 1 },
+      { code: 'EDU106', title: 'B.A (Ed) French', level: 100, semester: 1 },
+    ],
+    'Special Education': [
+      { code: 'SPE101', title: 'B.A. (Ed) Special Education', level: 100, semester: 1 },
+      { code: 'SPE102', title: 'B.A. (Ed.) Early Childhood Education', level: 100, semester: 1 },
+    ],
+    'Educational Psychology and Counseling': [
+      { code: 'EPC101', title: 'B.A. Ed. Primary Education Studies', level: 100, semester: 1 },
+      { code: 'EPC102', title: 'B.Ed. Guidance and Counselling', level: 100, semester: 1 },
+    ],
+    'Education Management': [
+      { code: 'EMT101', title: 'B.Ed. Educational Management', level: 100, semester: 1 },
+      { code: 'EMT102', title: 'B.Sc. (Ed) Economics', level: 100, semester: 1 },
+      { code: 'EMT103', title: 'B.Sc. (Ed) Business Studies Education', level: 100, semester: 1 },
+    ],
+    'Science Education': [
+      { code: 'SCE101', title: 'B.Sc. (Ed) Biology', level: 100, semester: 1 },
+      { code: 'SCE102', title: 'B.Sc. (Ed) Chemistry', level: 100, semester: 1 },
+      { code: 'SCE103', title: 'B.Sc. (Ed) Geography', level: 100, semester: 1 },
+      { code: 'SCE104', title: 'B.Sc. (Ed) Physics', level: 100, semester: 1 },
+      { code: 'SCE105', title: 'B.Sc. (Ed) Integrated Science', level: 100, semester: 1 },
+    ],
+    'Mathematics and Computer Science Education': [
+      { code: 'MCE101', title: 'B.Sc. (Ed) Mathematics', level: 100, semester: 1 },
+      { code: 'MCE102', title: 'B.Sc. (Ed) Computer Science Education', level: 100, semester: 1 },
+    ],
+    'Library and Information Science': [
+      { code: 'LIS101', title: 'BLIS', level: 100, semester: 1 },
+    ],
+    'Computer Science': [
+      { code: 'CSC101', title: 'Introduction to Programming', level: 100, semester: 1 },
+      { code: 'CSC102', title: 'Computer Fundamentals', level: 100, semester: 2 },
+      { code: 'CSC201', title: 'Data Structures', level: 200, semester: 1 },
+      { code: 'CSC301', title: 'Operating Systems', level: 300, semester: 1 },
+    ],
+  };
+  
   const insertF = db.prepare('INSERT INTO faculties (name) VALUES (?)');
   const insertD = db.prepare('INSERT INTO departments (name, facultyId) VALUES (?, ?)');
   const insertC = db.prepare('INSERT INTO courses (code, title, level, semester, units, departmentId) VALUES (?, ?, ?, ?, ?, ?)');
@@ -96,17 +141,15 @@ if (facCount === 0) {
     const fac = insertF.run(f);
     (depts[f] || []).forEach(d => {
       const dept = insertD.run(d, fac.lastInsertRowid);
-      // Sample courses for CS department
-      if (d === 'Computer Science') {
-        insertC.run('CSC101', 'Introduction to Programming', 100, 1, 3, dept.lastInsertRowid);
-        insertC.run('CSC102', 'Computer Fundamentals', 100, 2, 3, dept.lastInsertRowid);
-        insertC.run('CSC201', 'Data Structures', 200, 1, 4, dept.lastInsertRowid);
-        insertC.run('CSC301', 'Operating Systems', 300, 1, 4, dept.lastInsertRowid);
-      }
+      const courses = courseData[d] || [];
+      courses.forEach(c => {
+        try { insertC.run(c.code, c.title, c.level, c.semester, 3, dept.lastInsertRowid); } catch {}
+      });
     });
   });
   console.log('Database seeded');
 }
+  
 
 // AUTH
 app.post('/api/auth/register', async (req, res) => {

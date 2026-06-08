@@ -148,20 +148,13 @@ function Level({ API, t, showToast, setPdfUrl, setPdfTitle }) {
                         >
                           View
                         </button>
-                        <button
-                          onClick={() => handleDownload(l, course)}
-                          style={{
-                            background: t.green,
-                            color: 'white',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: 6,
-                            fontSize: 12,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Download
-                        </button>
+                       <button onClick={() => {
+  if (!user) { showToast('Please login first', 'error'); nav('/settings'); return }
+  handleDownload(l)
+}} style={{
+  background: t.green, color: 'white', border: 'none',
+  padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer'
+}}>Download</button>
                       </div>
                     </div>
                   ))
