@@ -74,6 +74,7 @@ const adminAuth = (req, res, next) => {
 };
 
 // Seed data
+const facCount = db.prepare('SELECT COUNT(*) as c FROM faculties').get().c;
 if (facCount === 0) {
   const faculties = ['Faculty of Agriculture','Basic Medical Sciences','Earth and Environmental Sciences','Faculty of Education','Faculty of Humanities','Faculty of Law','Faculty of Management Sciences','Faculty of Natural and Applied Sciences','Faculty of Social Sciences'];
   
