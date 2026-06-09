@@ -74,23 +74,62 @@ const adminAuth = (req, res, next) => {
 };
 
 // Seed data
-const facCount = db.prepare('SELECT COUNT(*) as c FROM faculties').get().c;
 if (facCount === 0) {
-  const faculties = ['Faculty of Agriculture','Basic Medical Sciences','Earth and Environmental Sciences','Faculty of Education','Faculty of Humanities','Faculty of Law','Faculty of Management Sciences','Faculty of Natural and Applied Sciences','Faculty of Social Sciences'];
+  const faculties = [
+    'Faculty of Agriculture','Basic Medical Sciences','Earth and Environmental Sciences',
+    'Faculty of Education','Faculty of Humanities','Faculty of Law',
+    'Faculty of Management Sciences','Faculty of Natural and Applied Sciences','Faculty of Social Sciences'
+  ];
   
   const depts = {
-    'Faculty of Agriculture': ['Agricultural Science','Fisheries and Aquaculture','Forestry and Wildlife Management','Food Science and Technology'],
+    'Faculty of Agriculture': ['Agricultural Science','Fisheries and Aquaculture','Forestry and Wildlife Management'],
     'Basic Medical Sciences': ['Medical Laboratory Science','Nursing','Physiotherapy','Medicine and Surgery'],
     'Earth and Environmental Sciences': ['Environmental Management','Geography','Meteorology'],
-    'Faculty of Education': ['Education','Special Education','Educational Psychology and Counseling','Education Management','Science Education','Mathematics and Computer Science Education','Library and Information Science'],
-    'Faculty of Humanities': ['Arabic','English and French','Nigerian Languages','History','Islamic Studies'],
+    'Faculty of Education': ['Education','Special Education','Educational Psychology and Counseling','Education Management','Science Education','Mathematics and Computer Science Education'],
+    'Faculty of Humanities': ['Arabic','English and French','Nigerian Languages','History and Security Studies','Islamic Studies'],
     'Faculty of Law': ['Law'],
     'Faculty of Management Sciences': ['Accounting','Business Administration','Public Administration','Local Government and Development Studies'],
-    'Faculty of Natural and Applied Sciences': ['Biochemistry','Biological Sciences','Pure and Industrial Chemistry','Computer Science','Mathematics','MicroBiology','Physics','Statistics'],
+    'Faculty of Natural and Applied Sciences': ['Biochemistry','Biological Sciences','Pure and Industrial Chemistry','Computer Science','Mathematics','MicroBiological Sciences','Physics','Statistics'],
     'Faculty of Social Sciences': ['Economics','Political Science','Sociology','International Relations','Library and Information Science']
   };
   
   const courseData = {
+    // Faculty of Agriculture
+    'Agricultural Science': [
+      { code: 'AGR101', title: 'B. Agriculture', level: 100, semester: 1 },
+      { code: 'AGR102', title: 'B.Sc. Food Science and Technology', level: 100, semester: 1 },
+    ],
+    'Fisheries and Aquaculture': [
+      { code: 'FIS101', title: 'B. Fisheries and Aquaculture', level: 100, semester: 1 },
+    ],
+    'Forestry and Wildlife Management': [
+      { code: 'FOR101', title: 'B. Forestry and Wildlife Management', level: 100, semester: 1 },
+    ],
+    // Basic Medical Sciences
+    'Medical Laboratory Science': [
+      { code: 'MLS101', title: 'B. Medical Laboratory Science (BMLS)', level: 100, semester: 1 },
+    ],
+    'Nursing': [
+      { code: 'NUR101', title: 'B.NSc. Nursing Science', level: 100, semester: 1 },
+    ],
+    'Physiotherapy': [
+      { code: 'DPT101', title: 'Doctor of Physiotherapy (DPT)', level: 100, semester: 1 },
+    ],
+    'Medicine and Surgery': [
+      { code: 'MBBS101', title: 'MBBS', level: 100, semester: 1 },
+    ],
+    // Earth and Environmental Sciences
+    'Environmental Management': [
+      { code: 'EVM101', title: 'B.Sc Environmental Management', level: 100, semester: 1 },
+    ],
+    'Geography': [
+      { code: 'GEO101', title: 'B.Sc Geography (Science)', level: 100, semester: 1 },
+      { code: 'GEO102', title: 'B.Sc Geography (Social Science)', level: 100, semester: 1 },
+    ],
+    'Meteorology': [
+      { code: 'MET101', title: 'B.Sc. Meteorology', level: 100, semester: 1 },
+    ],
+    // Faculty of Education
     'Education': [
       { code: 'EDU101', title: 'B.A (Ed) Arabic', level: 100, semester: 1 },
       { code: 'EDU102', title: 'B.A (Ed) English', level: 100, semester: 1 },
@@ -115,22 +154,102 @@ if (facCount === 0) {
     'Science Education': [
       { code: 'SCE101', title: 'B.Sc. (Ed) Biology', level: 100, semester: 1 },
       { code: 'SCE102', title: 'B.Sc. (Ed) Chemistry', level: 100, semester: 1 },
-      { code: 'SCE103', title: 'B.Sc. (Ed) Geography', level: 100, semester: 1 },
-      { code: 'SCE104', title: 'B.Sc. (Ed) Physics', level: 100, semester: 1 },
-      { code: 'SCE105', title: 'B.Sc. (Ed) Integrated Science', level: 100, semester: 1 },
+      { code: 'SCE103', title: 'B.Sc. (Ed) Geography (Social Science)', level: 100, semester: 1 },
+      { code: 'SCE104', title: 'B.Sc. (Ed) Geography (Science)', level: 100, semester: 1 },
+      { code: 'SCE105', title: 'B.Sc. (Ed) Physics', level: 100, semester: 1 },
+      { code: 'SCE106', title: 'B.Sc. (Ed) Integrated Science', level: 100, semester: 1 },
     ],
     'Mathematics and Computer Science Education': [
       { code: 'MCE101', title: 'B.Sc. (Ed) Mathematics', level: 100, semester: 1 },
       { code: 'MCE102', title: 'B.Sc. (Ed) Computer Science Education', level: 100, semester: 1 },
     ],
-    'Library and Information Science': [
-      { code: 'LIS101', title: 'BLIS', level: 100, semester: 1 },
+    // Faculty of Humanities
+    'Arabic': [
+      { code: 'ARB101', title: 'B.A Arabic', level: 100, semester: 1 },
+      { code: 'ARB102', title: 'B.A. Arabic Literary Study and Translation', level: 100, semester: 1 },
+    ],
+    'English and French': [
+      { code: 'ENG101', title: 'B.A English', level: 100, semester: 1 },
+      { code: 'FRN101', title: 'B.A French', level: 100, semester: 1 },
+    ],
+    'Nigerian Languages': [
+      { code: 'HAU101', title: 'B.A Hausa', level: 100, semester: 1 },
+    ],
+    'History and Security Studies': [
+      { code: 'HIS101', title: 'B.A History', level: 100, semester: 1 },
+    ],
+    'Islamic Studies': [
+      { code: 'ISL101', title: 'B.A Islamic Studies', level: 100, semester: 1 },
+      { code: 'ISL102', title: 'B.A Sharia', level: 100, semester: 1 },
+    ],
+    // Faculty of Law
+    'Law': [
+      { code: 'LAW101', title: 'LLB LAW', level: 100, semester: 1 },
+    ],
+    // Faculty of Management Sciences
+    'Accounting': [
+      { code: 'ACC101', title: 'B.Sc Accounting', level: 100, semester: 1 },
+    ],
+    'Business Administration': [
+      { code: 'BUS101', title: 'B.Sc Business Administration', level: 100, semester: 1 },
+    ],
+    'Public Administration': [
+      { code: 'PUB101', title: 'B.Sc Public Administration', level: 100, semester: 1 },
+    ],
+    'Local Government and Development Studies': [
+      { code: 'LGS101', title: 'B.Sc. Local Government and Development Studies', level: 100, semester: 1 },
+    ],
+    // Faculty of Natural and Applied Sciences
+    'Biochemistry': [
+      { code: 'BCH101', title: 'B.Sc Biochemistry', level: 100, semester: 1 },
+    ],
+    'Biological Sciences': [
+      { code: 'BIO101', title: 'B.Sc Biology', level: 100, semester: 1 },
+      { code: 'BIO102', title: 'B.Sc. Animal and Environmental Biological Sciences', level: 100, semester: 1 },
+      { code: 'BIO103', title: 'B.Sc. Biological Sciences', level: 100, semester: 1 },
+      { code: 'BIO104', title: 'B.Sc. Plant Science and Biotechnology', level: 100, semester: 1 },
+    ],
+    'Pure and Industrial Chemistry': [
+      { code: 'CHM101', title: 'B.Sc Chemistry', level: 100, semester: 1 },
+      { code: 'CHM102', title: 'B.Sc Industrial Chemistry', level: 100, semester: 1 },
     ],
     'Computer Science': [
-      { code: 'CSC101', title: 'Introduction to Programming', level: 100, semester: 1 },
-      { code: 'CSC102', title: 'Computer Fundamentals', level: 100, semester: 2 },
-      { code: 'CSC201', title: 'Data Structures', level: 200, semester: 1 },
-      { code: 'CSC301', title: 'Operating Systems', level: 300, semester: 1 },
+      { code: 'CSC101', title: 'B.Sc Computer Science', level: 100, semester: 1 },
+      { code: 'CSC102', title: 'B.Sc. Cyber Security', level: 100, semester: 1 },
+      { code: 'CSC103', title: 'B.Sc. Information System', level: 100, semester: 1 },
+      { code: 'CSC104', title: 'B.Sc. Software Engineering', level: 100, semester: 1 },
+    ],
+    'Mathematics': [
+      { code: 'MTH101', title: 'B.Sc Mathematics', level: 100, semester: 1 },
+      { code: 'MTH102', title: 'B.Sc. Statistics', level: 100, semester: 1 },
+    ],
+    'MicroBiological Sciences': [
+      { code: 'MCB101', title: 'B.Sc MicroBiological Sciences', level: 100, semester: 1 },
+    ],
+    'Physics': [
+      { code: 'PHY101', title: 'B.Sc Physics', level: 100, semester: 1 },
+      { code: 'PHY102', title: 'B.Sc. Applied Geophysics', level: 100, semester: 1 },
+      { code: 'PHY103', title: 'B.Sc. Medical Physics', level: 100, semester: 1 },
+      { code: 'PHY104', title: 'B.Sc. Physics with Electronics', level: 100, semester: 1 },
+    ],
+    'Statistics': [
+      { code: 'STA101', title: 'B.Sc. Statistics', level: 100, semester: 1 },
+    ],
+    // Faculty of Social Sciences
+    'Economics': [
+      { code: 'ECO101', title: 'B.Sc Economics', level: 100, semester: 1 },
+    ],
+    'Political Science': [
+      { code: 'POL101', title: 'B.Sc Political Science', level: 100, semester: 1 },
+    ],
+    'Sociology': [
+      { code: 'SOC101', title: 'B.Sc Sociology', level: 100, semester: 1 },
+    ],
+    'International Relations': [
+      { code: 'INR101', title: 'B.Sc. International Relations', level: 100, semester: 1 },
+    ],
+    'Library and Information Science': [
+      { code: 'LIS201', title: 'B.Sc. Library and Information Science', level: 100, semester: 1 },
     ],
   };
   
@@ -148,7 +267,7 @@ if (facCount === 0) {
       });
     });
   });
-  console.log('Database seeded');
+  console.log('Database seeded with all courses');
 }
   
 
