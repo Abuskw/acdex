@@ -542,6 +542,18 @@ app.get('/api/admin/analytics', adminAuth, (req, res) => {
     totalBanned, flaggedLectures, topCourses
   });
 });
+// Reset database (temporary - remove after use)
+app.get('/api/reset', (req, res) => {
+  db.prepare('DELETE FROM lectures').run();
+  db.prepare('DELETE FROM comments').run();
+  db.prepare('DELETE FROM ratings').run();
+  db.prepare('DELETE FROM bookmarks').run();
+  db.prepare('DELETE FROM reports').run();
+  db.prepare('DELETE FROM courses').run();
+  db.prepare('DELETE FROM departments').run();
+  db.prepare('DELETE FROM faculties').run();
+  res.json({ message: 'Database reset. Restart server to re-seed.' });
+});
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
