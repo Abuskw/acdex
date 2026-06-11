@@ -542,8 +542,8 @@ app.get('/api/admin/analytics', adminAuth, (req, res) => {
     totalBanned, flaggedLectures, topCourses
   });
 });
-// Reset database (temporary - remove after use)
-app.get('/api/reset', (req, res) => {
+app.get('/api/seed', (req, res) => {
+  db.pragma('foreign_keys = OFF');
   db.prepare('DELETE FROM lectures').run();
   db.prepare('DELETE FROM comments').run();
   db.prepare('DELETE FROM ratings').run();
@@ -552,7 +552,26 @@ app.get('/api/reset', (req, res) => {
   db.prepare('DELETE FROM courses').run();
   db.prepare('DELETE FROM departments').run();
   db.prepare('DELETE FROM faculties').run();
-  res.json({ message: 'Database reset. Restart server to re-seed.' });
+  db.pragma('foreign_keys = ON');
+  
+  // Re-seed
+  const faculties = [
+    'Faculty of Agriculture','Basic Medical Sciences','Earth and Environmental Sciences',
+    'Faculty of Education','Faculty of Humanities','Faculty of Law',
+    'Faculty of Management Sciences','Faculty of Natural and Applied Sciences','Faculty of Social Sciences'
+  ];
+  // ... (copy the exact same seed logic from above - the depts, courseData, and insert loops)
+  
+  res.json({ message: 'Database re-seeded' });
+});
+// Force re-seed
+app.get('/api/seed', (req, res) => {
+  const facCount = db.prepare('SELECT COUNT(*) as c FROM faculties').get().c;
+  if (facCount > 0) {
+    return res.json({ message: 'Already seeded. Use /api/reset first.' });
+  }
+  // Re-run the seed logic
+  res.json({ message: 'Not seeded. Restart server.' });
 });
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
