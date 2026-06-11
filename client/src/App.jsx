@@ -4,7 +4,6 @@ import BottomNav from './components/BottomNav'
 import PDFViewer from './components/PDFViewer'
 import Home from './pages/Home'
 import Faculty from './pages/Faculty'
-import Department from './pages/Department'
 import Level from './pages/Level'
 import Course from './pages/Course'
 import Search from './pages/Search'
@@ -12,7 +11,7 @@ import Library from './pages/Library'
 import Settings from './pages/Settings'
 import Upload from './pages/Upload'
 import Admin from './pages/Admin'
-
+import Levels from './pages/Levels'
 function App() {
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('darkMode') === 'true'
@@ -77,7 +76,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home {...props} />} />
           <Route path="/faculty/:id" element={<Faculty {...props} />} />
-          <Route path="/department/:id" element={<Department {...props} />} />
+          <Route path="/levels/:courseId" element={<Levels {...props} />} />
           <Route path="/level/:deptId/:level" element={<Level {...props} />} />
           <Route path="/course/:id" element={<Course {...props} />} />
           <Route path="/search" element={<Search {...props} />} />
