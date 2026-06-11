@@ -12,7 +12,7 @@ function Upload({ API, t, token, showToast }) {
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [allCourses, setAllCourses] = useState([])
-
+const [level, setLevel] = useState('')
   useEffect(() => {
     fetch(`${API}/api/faculties`).then(r => r.json()).then(setFaculties)
     fetch(`${API}/api/courses`).then(r => r.json()).then(setAllCourses)
@@ -48,7 +48,7 @@ function Upload({ API, t, token, showToast }) {
     fd.append('weekNumber', week)
     fd.append('courseId', course)
     fd.append('academicYear', '2024/2025')
-
+fd.append('level', level)
     try {
       const res = await fetch(`${API}/api/lectures/upload`, {
         method: 'POST',
@@ -115,7 +115,19 @@ function Upload({ API, t, token, showToast }) {
         </div>
 
         <hr style={{ border: 'none', borderTop: `1px solid ${t.border}` }} />
-
+{/* Level */}
+<div>
+  <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Level</label>
+  <select value={level} onChange={e => setLevel(e.target.value)} disabled={!course} style={{
+    width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text
+  }}>
+    <option value="">Select Level</option>
+    <option value="100">100 Level</option>
+    <option value="200">200 Level</option>
+    <option value="300">300 Level</option>
+    <option value="400">400 Level</option>
+  </select>
+</div>
         {/* Lecture Details */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Lecture Title</label>
