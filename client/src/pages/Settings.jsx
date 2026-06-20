@@ -5,7 +5,7 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
   const [form, setForm] = useState({ email: '', password: '', fullName: '', role: 'student', lecturerCode: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
+const [tab, setTab] = useState('account')
   const registerWithBackend = async (firebaseUser, role, lecturerCode) => {
     const res = await fetch(`${API}/api/auth/firebase`, {
       method: 'POST',
@@ -163,11 +163,56 @@ setError(getErrorMessage(err))
           </div>
         </div>
       </div>
+{tab === 'privacy' && (
+  <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginTop: 12 }}>
+    <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>Privacy Policy</h3>
+    <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.8 }}>
+      We collect only your name, email, and academic level to provide services. Your data is never sold or shared with third parties. Passwords are encrypted via Firebase. You can delete your account at any time.
+    </p>
+  </div>
+)}
 
+{tab === 'terms' && (
+  <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginTop: 12 }}>
+    <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>Terms & Conditions</h3>
+    <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.8 }}>
+      Lecture materials are for educational use only. Do not redistribute without permission. The platform is provided "as is" without warranties. We reserve the right to remove content that violates our policies.
+    </p>
+  </div>
+)}
+
+{tab === 'about' && (
+  <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginTop: 12 }}>
+    <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>About ACdex</h3>
+    <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.8 }}>
+      ACdex is a centralized lecture repository for students to access past, current, and upcoming lecture materials across all faculties and departments. Built with React + Node.js.
+    </p>
+  </div>
+)}
+
+{tab === 'contact' && (
+  <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginTop: 12 }}>
+    <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>Contact</h3>
+    <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.8 }}>
+      For support, suggestions, or inquiries, please contact your faculty administrator or the IT department.
+    </p>
+  </div>
+)}
       <button onClick={handleLogout}
         style={{ width: '100%', marginTop: 20, padding: 12, background: 'transparent', border: `1px solid ${t.red}`, color: t.red, borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 500 }}>
         Logout
       </button>
+      {/* Legal & Support */}
+<div style={{ marginTop: 32, textAlign: 'center' }}>
+  <p style={{ color: t.sub, fontSize: 11, marginBottom: 12 }}>Legal & Support</p>
+  <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+    <span style={{ color: t.accent, fontSize: 12, cursor: 'pointer' }} onClick={() => setTab('privacy')}>Privacy Policy</span>
+    <span style={{ color: t.accent, fontSize: 12, cursor: 'pointer' }} onClick={() => setTab('terms')}>Terms & Conditions</span>
+    <span style={{ color: t.accent, fontSize: 12, cursor: 'pointer' }} onClick={() => setTab('about')}>About</span>
+    <span style={{ color: t.accent, fontSize: 12, cursor: 'pointer' }} onClick={() => setTab('contact')}>Contact</span>
+  </div>
+  <p style={{ color: t.sub, fontSize: 10 }}>ACdex v2.0.0 • Made for Students</p>
+</div>
     </div>
   )
 }
