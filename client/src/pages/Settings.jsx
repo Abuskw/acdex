@@ -42,29 +42,7 @@ const getErrorMessage = (err) => {
   }
   return messages[err.code] || err.message
 }
-  const handleGoogleLogin = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const auth = window.firebaseAuth
-      const provider = new window.GoogleAuthProvider()
-      const result = await window.signInWithPopup(auth, provider)
-      const ok = await registerWithBackend(result.user, form.role, form.lecturerCode)
-      if (ok) showToast('Logged in with Google!')
-      else setError('Failed to register with server')
-    } catch (err) {
-      if (err.code === 'auth/popup-blocked') {
-  showToast('Please allow popups for this site', 'error')
-  setError('Please allow popups for this site')
-
-      } else {
-        showToast(getErrorMessage(err), 'error')
-setError(getErrorMessage(err))
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+  
 
   const handleEmailAuth = async (e) => {
     e.preventDefault()
@@ -118,20 +96,7 @@ setError(getErrorMessage(err))
 
         {error && <p style={{ color: t.red, fontSize: 13, marginBottom: 12, textAlign: 'center', background: '#fef2f2', padding: 10, borderRadius: 8 }}>{error}</p>}
 
-        {/* Google Login Button */}
-        <button onClick={handleGoogleLogin} disabled={loading} style={{
-          width: '100%', padding: 14, borderRadius: 10, background: t.card, border: `1px solid ${t.border}`,
-          color: t.text, cursor: 'pointer', fontSize: 15, fontWeight: 500,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16
-        }}>
-          <span style={{ fontSize: 20 }}>G</span> Sign in with Google
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ flex: 1, height: 1, background: t.border }} />
-          <span style={{ color: t.sub, fontSize: 12 }}>or</span>
-          <div style={{ flex: 1, height: 1, background: t.border }} />
-        </div>
+       
 
         {/* Email Login Form */}
         <form onSubmit={handleEmailAuth} style={{ display: 'grid', gap: 10 }}>
