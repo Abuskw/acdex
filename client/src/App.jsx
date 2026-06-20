@@ -12,17 +12,43 @@ import Settings from './pages/Settings'
 import Upload from './pages/Upload'
 import Admin from './pages/Admin'
 import Levels from './pages/Levels'
+
+const getCached = (key) => {
+  try {
+    const data = localStorage.getItem(key)
+    if (!data) return null
+    const parsed = JSON.parse(data)
+    if (Date.now() - parsed.timestamp > 3600000) {
+      localStorage.removeItem(key)
+      return null
+    }
+    return parsed.data
+  } catch { return null }
+}
+
+const setCached = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch {}
+}
+
 function App() {
-  const [dark, setDark] = useState(() => {
-    return localStorage.getItem('darkMode') === 'true'
-  })
+  const [dark, setDark] = useState(() => localStorage.getItem('darkMode') === 'true')
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || 'null'))
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [toast, setToast] = useState(null)
   const [pdfUrl, setPdfUrl] = useState(null)
   const [pdfTitle, setPdfTitle] = useState('')
+  const [faculties, setFaculties] = useState([])
+  const [courses, setCourses] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedFaculty, setSelectedFaculty] = useState(null)
+  const [selectedDepartment, setSelectedDepartment] = useState(null)
+  const [selectedLevel, setSelectedLevel] = useState(null)
+  const [bookmarks, setBookmarks] = useState(JSON.parse(localStorage.getItem('bm') || '[]'))
 
- const API = 'https://acdex.onrender.com'
+  const API = 'https://acdex.onrender.com'
   const t = dark
     ? { bg: '#0f172a', card: '#1e293b', text: '#e2e8f0', sub: '#94a3b8', border: '#334155', header: '#1e3a5f', accent: '#3b82f6', green: '#10b981', red: '#ef4444' }
     : { bg: '#f1f5f9', card: '#fff', text: '#1e293b', sub: '#64748b', border: '#e2e8f0', header: '#1e40af', accent: '#3b82f6', green: '#10b981', red: '#ef4444' }
@@ -32,12 +58,35 @@ function App() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const props = { API, t, dark, setDark, user, setUser, token, setToken, showToast, setPdfUrl, setPdfTitle }
+  useEffect(() => {
+    const cachedFaculties = getCached('acdex_faculties')
+    const cachedCourses = getCached('acdex_courses')
+    
+    if (cachedFaculties && cachedCourses) {
+      setFaculties(cachedFaculties)
+      setCourses(cachedCourses)
+      setLoading(false)
+    }
+    
+    Promise.all([
+      fetch(`${API}/api/courses`).then(r => r.json()),
+      fetch(`${API}/api/faculties`).then(r => r.json())
+    ]).then(([c, f]) => {
+      setCourses(c)
+      setFaculties(f)
+      setLoading(false)
+      setCached('acdex_courses', c)
+      setCached('acdex_faculties', f)
+    }).catch(() => {
+      if (!cachedFaculties) setLoading(false)
+    })
+  }, [])
+
+  const props = { API, t, dark, setDark, user, setUser, token, setToken, showToast, setPdfUrl, setPdfTitle, faculties, setFaculties, courses, setCourses, departments, setDepartments, loading, setLoading, selectedFaculty, setSelectedFaculty, selectedDepartment, setSelectedDepartment, selectedLevel, setSelectedLevel, bookmarks, setBookmarks }
 
   return (
     <BrowserRouter>
       <div className={dark ? 'dark' : ''} style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh', paddingBottom: 70, transition: 'all 0.3s' }}>
-        {/* Sticky Header */}
         <header style={{
           background: t.header, color: 'white', padding: '12px 16px',
           position: 'sticky', top: 0, zIndex: 100, display: 'flex',
@@ -45,32 +94,20 @@ function App() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>ACdex</h1>
-          <button
-            onClick={() => {
-              const newDark = !dark
-              setDark(newDark)
-              localStorage.setItem('darkMode', newDark)
-            }}
-            style={{
-              background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white',
-              padding: '6px 12px', borderRadius: 20, fontSize: 13, cursor: 'pointer'
-            }}
-          >
+          <button onClick={() => { const newDark = !dark; setDark(newDark); localStorage.setItem('darkMode', newDark) }}
+            style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 20, fontSize: 13, cursor: 'pointer' }}>
             {dark ? '☀️ Light' : '🌙 Dark'}
           </button>
         </header>
 
-        {/* Toast */}
         {toast && (
           <div onClick={() => setToast(null)} style={{
             position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
             background: toast.type === 'error' ? t.red : t.green, color: 'white',
-            padding: '10px 24px', borderRadius: 30, zIndex: 999,
-            fontSize: 14, fontWeight: 500, cursor: 'pointer', animation: 'slideUp 0.3s ease',
-            whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-          }}>
-            {toast.msg}
-          </div>
+            padding: '10px 24px', borderRadius: 30, zIndex: 999, fontSize: 14, fontWeight: 500,
+            cursor: 'pointer', animation: 'slideUp 0.3s ease', whiteSpace: 'nowrap',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          }}>{toast.msg}</div>
         )}
 
         <Routes>
@@ -88,29 +125,11 @@ function App() {
 
         <PDFViewer url={pdfUrl} title={pdfTitle} onClose={() => setPdfUrl(null)} />
 
-        {/* Admin Floating Button – uses window.location to avoid useNavigate outside Router */}
         {user?.role === 'admin' && (
-          <button
-            onClick={() => { window.location.href = '/admin' }}
-            style={{
-              position: 'fixed',
-              bottom: 80,
-              right: 20,
-              background: t.red,
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: 50,
-              height: 50,
-              fontSize: 20,
-              cursor: 'pointer',
-              zIndex: 200,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-            }}
-            title="Admin Panel"
-          >
-            ⚙
-          </button>
+          <button onClick={() => { window.location.href = '/admin' }}
+            style={{ position: 'fixed', bottom: 80, right: 20, background: t.red, color: 'white', border: 'none',
+              borderRadius: '50%', width: 50, height: 50, fontSize: 20, cursor: 'pointer', zIndex: 200,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>⚙</button>
         )}
 
         <BottomNav {...props} />
