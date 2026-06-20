@@ -4,130 +4,107 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
   const [isLogin, setIsLogin] = useState(true)
   const [form, setForm] = useState({ email: '', password: '', fullName: '', role: 'student', lecturerCode: '' })
   const [error, setError] = useState('')
-  const [expanded, setExpanded] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleAuth = async (e) => {
-    e.preventDefault()
+  const registerWithBackend = async (firebaseUser, role, lecturerCode) => {
+    const res = await fetch(`${API}/api/auth/firebase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: firebaseUser.email,
+        fullName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+        role: role || 'student',
+        lecturerCode: lecturerCode || ''
+      })
+    })
+    const data = await res.json()
+    if (data.token) {
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setToken(data.token)
+      setUser(data.user)
+      return true
+    }
+    return false
+  }
+const getErrorMessage = (err) => {
+  const messages = {
+    'auth/weak-password': 'Password must be at least 6 characters',
+    'auth/invalid-email': 'Please enter a valid email address',
+    'auth/user-not-found': 'No account found with this email',
+    'auth/wrong-password': 'Incorrect password',
+    'auth/email-already-in-use': 'An account already exists with this email',
+    'auth/popup-blocked': 'Please allow popups for this site',
+    'auth/popup-closed-by-user': 'Sign in cancelled',
+    'auth/network-request-failed': 'Network error. Check your connection',
+    'auth/invalid-credential': 'Invalid email or password',
+    'auth/too-many-requests': 'Too many attempts. Please try again later',
+  }
+  return messages[err.code] || err.message
+}
+  const handleGoogleLogin = async () => {
+    setLoading(true)
     setError('')
-    const ep = isLogin ? '/api/auth/login' : '/api/auth/register'
-    const body = isLogin ? { email: form.email, password: form.password } : form
     try {
-      const res = await fetch(API + ep, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      const data = await res.json()
-      if (res.ok) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-        setToken(data.token)
-        setUser(data.user)
-        showToast(isLogin ? 'Logged in' : 'Account created')
-      } else setError(data.error)
-    } catch { setError('Network error') }
-  }
+      const auth = window.firebaseAuth
+      const provider = new window.GoogleAuthProvider()
+      const result = await window.signInWithPopup(auth, provider)
+      const ok = await registerWithBackend(result.user, form.role, form.lecturerCode)
+      if (ok) showToast('Logged in with Google!')
+      else setError('Failed to register with server')
+    } catch (err) {
+      if (err.code === 'auth/popup-blocked') {
+  showToast('Please allow popups for this site', 'error')
+  setError('Please allow popups for this site')
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setToken(null)
-    setUser(null)
-    showToast('Logged out')
-  }
-
-  const clearDownloads = () => {
-    if (confirm('Clear all download history?')) {
-      localStorage.setItem('dl', '[]')
-      showToast('Downloads cleared')
+      } else {
+        showToast(getErrorMessage(err), 'error')
+setError(getErrorMessage(err))
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
-  const menuItems = [
-    {
-      key: 'downloads',
-      icon: '📥',
-      label: 'Downloads',
-      sub: `${JSON.parse(localStorage.getItem('dl') || '[]').length} files saved`,
-      content: (
-        <div style={{ padding: '8px 0' }}>
-          <p style={{ color: t.sub, fontSize: 13, marginBottom: 12 }}>
-            {JSON.parse(localStorage.getItem('dl') || '[]').length} lectures downloaded
-          </p>
-          <button onClick={clearDownloads}
-            style={{
-              background: 'transparent', border: `1px solid ${t.red}`, color: t.red,
-              padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13
-            }}>
-            Clear History
-          </button>
-        </div>
-      )
-    },
-    {
-      key: 'theme',
-      icon: '🎨',
-      label: 'Theme',
-      sub: dark ? 'Dark mode on' : 'Light mode on',
-      content: (
-        <div style={{ padding: '8px 0' }}>
-          <p style={{ color: t.sub, fontSize: 13, marginBottom: 12 }}>Choose your preferred theme</p>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setDark(false)} style={{
-              flex: 1, padding: '12px', borderRadius: 10, border: !dark ? `2px solid ${t.accent}` : `1px solid ${t.border}`,
-              background: !dark ? t.accent + '10' : t.card, color: t.text, cursor: 'pointer', fontWeight: !dark ? 600 : 400
-            }}>
-              ☀️ Light
-            </button>
-            <button onClick={() => setDark(true)} style={{
-              flex: 1, padding: '12px', borderRadius: 10, border: dark ? `2px solid ${t.accent}` : `1px solid ${t.border}`,
-              background: dark ? t.accent + '10' : t.card, color: t.text, cursor: 'pointer', fontWeight: dark ? 600 : 400
-            }}>
-              🌙 Dark
-            </button>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'about',
-      icon: 'ℹ️',
-      label: 'About',
-      sub: 'Version 2.0.0',
-      content: (
-        <div style={{ padding: '8px 0' }}>
-          <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
-            ACdex is a centralized lecture repository for students to access past, current, and upcoming lecture materials.
-          </p>
-          <div style={{ display: 'grid', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: t.sub, fontSize: 12 }}>Version</span>
-              <span style={{ fontSize: 12 }}>2.0.0</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: t.sub, fontSize: 12 }}>Built with</span>
-              <span style={{ fontSize: 12 }}>React + Node.js</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: t.sub, fontSize: 12 }}>Storage</span>
-              <span style={{ fontSize: 12 }}>Cloudinary</span>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'privacy',
-      icon: '🔒',
-      label: 'Privacy Policy',
-      sub: 'How we handle your data',
-      content: (
-        <div style={{ padding: '8px 0' }}>
-          <p style={{ color: t.sub, fontSize: 13, lineHeight: 1.8 }}>
-            We collect only your name, email, and academic level to provide services. Your data is never sold or shared. Passwords are encrypted. You can delete your account anytime.
-          </p>
-        </div>
-      )
-    },
-  ]
+  const handleEmailAuth = async (e) => {
+    e.preventDefault()
+    if (!form.email || !form.password) return setError('Fill all fields')
+    setLoading(true)
+    setError('')
+    try {
+      let firebaseUser
+      if (isLogin) {
+        const result = await window.signInWithEmailAndPassword(window.firebaseAuth, form.email, form.password)
+        firebaseUser = result.user
+      } else {
+        const result = await window.createUserWithEmailAndPassword(window.firebaseAuth, form.email, form.password)
+        firebaseUser = result.user
+      }
+      const ok = await registerWithBackend(firebaseUser, form.role, form.lecturerCode)
+      if (ok) showToast(isLogin ? 'Logged in!' : 'Account created!')
+      else setError('Failed to register with server')
+    } catch (err) {
+      showToast(getErrorMessage(err), 'error')
+setError(getErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  // Login screen if not logged in
+  const handleLogout = async () => {
+    try {
+      await window.signOut(window.firebaseAuth)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setToken(null)
+      setUser(null)
+      showToast('Logged out')
+    } catch (err) {
+      console.error('Logout failed:', err)
+    }
+  }
+
+  // Login screen
   if (!user) {
     return (
       <div className="fade-in" style={{ padding: 16, maxWidth: 400, margin: '0 auto' }}>
@@ -136,12 +113,28 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
             📚
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>ACdex</h2>
-          <p style={{ color: t.sub, fontSize: 13 }}>{isLogin ? 'Welcome back' : 'Create your account'}</p>
+          <p style={{ color: t.sub, fontSize: 13 }}>{isLogin ? 'Welcome back' : 'Create account'}</p>
         </div>
 
         {error && <p style={{ color: t.red, fontSize: 13, marginBottom: 12, textAlign: 'center', background: '#fef2f2', padding: 10, borderRadius: 8 }}>{error}</p>}
 
-        <form onSubmit={handleAuth} style={{ display: 'grid', gap: 10 }}>
+        {/* Google Login Button */}
+        <button onClick={handleGoogleLogin} disabled={loading} style={{
+          width: '100%', padding: 14, borderRadius: 10, background: t.card, border: `1px solid ${t.border}`,
+          color: t.text, cursor: 'pointer', fontSize: 15, fontWeight: 500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16
+        }}>
+          <span style={{ fontSize: 20 }}>G</span> Sign in with Google
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: t.border }} />
+          <span style={{ color: t.sub, fontSize: 12 }}>or</span>
+          <div style={{ flex: 1, height: 1, background: t.border }} />
+        </div>
+
+        {/* Email Login Form */}
+        <form onSubmit={handleEmailAuth} style={{ display: 'grid', gap: 10 }}>
           {!isLogin && (
             <>
               <select value={form.role} onChange={e => setForm({...form, role: e.target.value})}
@@ -149,11 +142,10 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
                 <option value="student">Student</option>
                 <option value="lecturer">Lecturer</option>
               </select>
-              <input placeholder="Full Name" value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})}
-                style={{ padding: 12, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, color: t.text, fontSize: 14 }} required />
               {form.role === 'lecturer' && (
-                <input type="password" placeholder="Lecturer Code" value={form.lecturerCode} onChange={e => setForm({...form, lecturerCode: e.target.value})}
-                  style={{ padding: 12, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, color: t.text, fontSize: 14 }} required />
+                <input type="password" placeholder="Lecturer Code" value={form.lecturerCode}
+                  onChange={e => setForm({...form, lecturerCode: e.target.value})}
+                  style={{ padding: 12, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, color: t.text, fontSize: 14 }} />
               )}
             </>
           )}
@@ -161,8 +153,9 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
             style={{ padding: 12, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, color: t.text, fontSize: 14 }} required />
           <input type="password" placeholder="Password" value={form.password} onChange={e => setForm({...form, password: e.target.value})}
             style={{ padding: 12, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, color: t.text, fontSize: 14 }} required />
-          <button type="submit" style={{ background: t.accent, color: 'white', border: 'none', padding: 14, borderRadius: 10, cursor: 'pointer', fontSize: 15, fontWeight: 600, marginTop: 4 }}>
-            {isLogin ? 'Login' : 'Create Account'}
+          <button type="submit" disabled={loading}
+            style={{ background: t.accent, color: 'white', border: 'none', padding: 14, borderRadius: 10, cursor: 'pointer', fontSize: 15, fontWeight: 600 }}>
+            {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
           </button>
         </form>
 
@@ -177,97 +170,37 @@ function Settings({ API, t, dark, setDark, user, setUser, token, setToken, showT
   // Logged in view
   return (
     <div className="fade-in" style={{ padding: 16, maxWidth: 400, margin: '0 auto' }}>
-      {/* Profile Header with Cloud Background */}
       <div style={{
         background: `linear-gradient(180deg, ${t.accent}40 0%, ${t.card} 100%)`,
-        borderRadius: 16,
-        padding: '30px 20px 20px',
-        marginBottom: 20,
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden'
+        borderRadius: 16, padding: '30px 20px 20px', marginBottom: 20, textAlign: 'center'
       }}>
-        {/* Decorative clouds */}
-        <div style={{
-          position: 'absolute', top: -20, left: -30,
-          width: 120, height: 60, background: 'rgba(255,255,255,0.08)',
-          borderRadius: '50%', filter: 'blur(10px)'
-        }} />
-        <div style={{
-          position: 'absolute', top: -10, right: -20,
-          width: 100, height: 50, background: 'rgba(255,255,255,0.06)',
-          borderRadius: '50%', filter: 'blur(8px)'
-        }} />
-
-        {/* Avatar */}
         <div style={{
           width: 72, height: 72, borderRadius: '50%',
           background: `linear-gradient(135deg, ${t.accent}, #8b5cf6)`,
           color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 30, fontWeight: 700, margin: '0 auto 12px',
-          boxShadow: '0 4px 15px rgba(59,130,246,0.3)'
+          fontSize: 30, fontWeight: 700, margin: '0 auto 12px'
         }}>
           {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
         </div>
-
         <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 2px' }}>{user.fullName}</h2>
         <p style={{ color: t.sub, fontSize: 13, margin: '0 0 10px' }}>{user.email}</p>
         <span style={{
-          display: 'inline-block', padding: '4px 16px', borderRadius: 20,
-          fontSize: 12, fontWeight: 600, color: 'white',
+          display: 'inline-block', padding: '4px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, color: 'white',
           background: user.role === 'lecturer' ? '#8b5cf6' : user.role === 'admin' ? t.red : t.green
-        }}>
-          {user.role?.toUpperCase()}
-        </span>
+        }}>{user.role?.toUpperCase()}</span>
       </div>
 
-      {/* Menu Items */}
       <div style={{ display: 'grid', gap: 6 }}>
-        {menuItems.map(item => (
-          <div key={item.key} style={{
-            background: t.card, border: `1px solid ${t.border}`,
-            borderRadius: 12, overflow: 'hidden'
-          }}>
-            <button
-              onClick={() => setExpanded(expanded === item.key ? null : item.key)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', background: 'transparent', border: 'none',
-                color: t.text, cursor: 'pointer', fontSize: 14
-              }}
-            >
-              <span style={{ fontSize: 20 }}>{item.icon}</span>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontWeight: 500 }}>{item.label}</div>
-                <div style={{ fontSize: 12, color: t.sub }}>{item.sub}</div>
-              </div>
-              <span style={{
-                transform: expanded === item.key ? 'rotate(90deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s', color: t.sub
-              }}>
-                ›
-              </span>
-            </button>
-
-            {expanded === item.key && (
-              <div style={{ padding: '0 16px 16px 52px', animation: 'fadeIn 0.2s ease' }}>
-                {item.content}
-              </div>
-            )}
+        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>🌙 Dark Mode</span>
+          <div onClick={() => setDark(!dark)} style={{ width: 50, height: 28, borderRadius: 14, background: dark ? t.accent : t.border, cursor: 'pointer', position: 'relative' }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: dark ? 24 : 2, transition: 'all 0.3s' }} />
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* Logout Button */}
-      <button
-        onClick={logout}
-        style={{
-          width: '100%', marginTop: 20, padding: 12,
-          background: 'transparent', border: `1px solid ${t.red}`,
-          color: t.red, borderRadius: 10, cursor: 'pointer',
-          fontSize: 14, fontWeight: 500
-        }}
-      >
+      <button onClick={handleLogout}
+        style={{ width: '100%', marginTop: 20, padding: 12, background: 'transparent', border: `1px solid ${t.red}`, color: t.red, borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 500 }}>
         Logout
       </button>
     </div>

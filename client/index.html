@@ -9,5 +9,26 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  
+  window.firebaseConfig = {
+    apiKey: "AIzaSyBYu89dxZ2p0S2_mopBu18RCin_8eWa1XI",
+    authDomain: "acdex-41c97.firebaseapp.com",
+    projectId: "acdex-41c97",
+    storageBucket: "acdex-41c97.firebasestorage.app",
+    messagingSenderId: "589952766141",
+    appId: "1:589952766141:web:7517ca4e9a2609ab34a7d4"
+  };
+  
+  const app = initializeApp(window.firebaseConfig);
+  window.firebaseAuth = getAuth(app);
+  window.GoogleAuthProvider = GoogleAuthProvider;
+  window.signInWithPopup = signInWithPopup;
+  window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+  window.signOut = signOut;
+</script>
   </body>
 </html>

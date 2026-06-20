@@ -77,7 +77,7 @@ function App() {
           <Route path="/" element={<Home {...props} />} />
           <Route path="/faculty/:id" element={<Faculty {...props} />} />
           <Route path="/levels/:courseId" element={<Levels {...props} />} />
-          <Route path="/level/:deptId/:level" element={<Level {...props} />} />
+          <Route path="/level/:courseId/:level" element={<Level {...props} />} />
           <Route path="/course/:id" element={<Course {...props} />} />
           <Route path="/search" element={<Search {...props} />} />
           <Route path="/library" element={<Library {...props} />} />

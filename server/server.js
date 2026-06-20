@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
+
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
@@ -273,30 +273,37 @@ if (facCount === 0) {
   
 
 // AUTH
-app.post('/api/auth/register', async (req, res) => {
+
+// Firebase Auth - register/login
+app.post('/api/auth/firebase', async (req, res) => {
   try {
-    const { email, password, fullName, role, lecturerCode } = req.body;
-    if (db.prepare('SELECT id FROM users WHERE email=?').get(email)) return res.status(400).json({ error: 'Email exists' });
+    const { email, fullName, role, lecturerCode } = req.body;
+    
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     let finalRole = role || 'student';
-    if (role === 'lecturer' && lecturerCode !== LECTURER_CODE) return res.status(403).json({ error: 'Invalid lecturer code' });
-    const hash = await bcrypt.hash(password, 10);
-    const r = db.prepare('INSERT INTO users (email, password, fullName, role) VALUES (?,?,?,?)').run(email, hash, fullName, finalRole);
-    const token = jwt.sign({ userId: r.lastInsertRowid, email, role: finalRole }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: r.lastInsertRowid, email, fullName, role: finalRole } });
-  } catch (e) { res.status(500).json({ error: 'Registration failed' }); }
+    
+    if (role === 'lecturer' && lecturerCode !== LECTURER_CODE) {
+      finalRole = 'student';
+    }
+    
+    if (user) {
+      const token = jwt.sign({ userId: user.id, email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+      const { password: _, ...u } = user;
+      return res.json({ token, user: u });
+    }
+    
+    // Create new user with empty password (Firebase handles auth)
+    const result = db.prepare('INSERT INTO users (email, password, fullName, role) VALUES (?, ?, ?, ?)')
+      .run(email, 'firebase', fullName, finalRole);
+    
+    const newUser = { id: result.lastInsertRowid, email, fullName, role: finalRole };
+    const token = jwt.sign({ userId: newUser.id, email, role: finalRole }, JWT_SECRET, { expiresIn: '7d' });
+    
+    res.json({ token, user: newUser });
+  } catch (e) {
+    res.status(500).json({ error: 'Auth failed' });
+  }
 });
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE email=?').get(email);
-    if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: 'Invalid credentials' });
-    const { password: _, ...u } = user;
-    const token = jwt.sign({ userId: user.id, email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: u });
-  } catch (e) { res.status(500).json({ error: 'Login failed' }); }
-});
-
 // COURSES
 app.get('/api/courses', (req, res) => {
   const { level, search } = req.query;
@@ -307,21 +314,21 @@ app.get('/api/courses', (req, res) => {
 });
 
 app.post('/api/courses/create', (req, res) => {
-  const { code, title, departmentId } = req.body;
+  const { code, title, departmentId, level } = req.body;
   const existing = db.prepare('SELECT * FROM courses WHERE code = ?').get(code);
   if (existing) return res.json(existing);
-  const result = db.prepare('INSERT INTO courses (code, title, level, semester, departmentId) VALUES (?, ?, 100, 1, ?)').run(code, title, departmentId);
+  const result = db.prepare('INSERT INTO courses (code, title, level, semester, departmentId) VALUES (?, ?, ?, 1, ?)').run(code, title, level || 100, departmentId);
   res.json({ id: result.lastInsertRowid, code, title });
 });
-
 app.get('/api/courses/:id/lectures', (req, res) => {
   res.json(db.prepare(`SELECT l.*, u.fullName as uploaderName, (SELECT AVG(value) FROM ratings WHERE lectureId=l.id) as avgRating FROM lectures l LEFT JOIN users u ON l.uploaderId=u.id WHERE l.courseId=? AND l.status='published' ORDER BY l.weekNumber`).all(req.params.id));
 });
 
 // FACULTIES
+
 app.get('/api/faculties', (req, res) => res.json(db.prepare('SELECT * FROM faculties ORDER BY name').all()));
 app.get('/api/faculties/:id/departments', (req, res) => res.json(db.prepare('SELECT * FROM departments WHERE facultyId=? ORDER BY name').all(req.params.id)));
-
+app.get('/api/departments', (req, res) => res.json(db.prepare('SELECT * FROM departments ORDER BY name').all()));
 // UPLOAD
 app.post('/api/lectures/upload', auth, upload.single('pdf'), async (req, res) => {
   try {
@@ -565,14 +572,9 @@ app.get('/api/seed', (req, res) => {
   res.json({ message: 'Database re-seeded' });
 });
 // Force re-seed
-app.get('/api/seed', (req, res) => {
-  const facCount = db.prepare('SELECT COUNT(*) as c FROM faculties').get().c;
-  if (facCount > 0) {
-    return res.json({ message: 'Already seeded. Use /api/reset first.' });
-  }
-  // Re-run the seed logic
-  res.json({ message: 'Not seeded. Restart server.' });
-});
+
+ 
+  
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
