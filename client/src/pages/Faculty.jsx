@@ -37,7 +37,7 @@ function Faculty({ API, t }) {
       <div style={{ display: 'grid', gap: 8 }}>
         {departments.map(dept => {
           const deptCourses = courses.filter(c => c.departmentId === dept.id)
-          if (deptCourses.length === 0) return null
+// Always show department, even if empty
           const isOpen = expandedDept === dept.id
 
           return (

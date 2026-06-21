@@ -121,6 +121,9 @@ function App() {
           <Route path="/settings" element={<Settings {...props} />} />
           <Route path="/upload" element={<Upload {...props} />} />
           <Route path="/admin" element={<Admin {...props} />} />
+          // No department route!
+<Route path="/levels/:courseId" element={<Levels {...props} />} />
+<Route path="/level/:courseId/:level" element={<Level {...props} />} />
         </Routes>
 
         <PDFViewer url={pdfUrl} title={pdfTitle} onClose={() => setPdfUrl(null)} />

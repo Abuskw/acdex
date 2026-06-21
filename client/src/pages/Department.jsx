@@ -32,7 +32,7 @@ function Department({ API, t }) {
           return (
             <button
               key={level}
-              onClick={() => nav(`/level/${id}/${level}`, {
+              onClick={() => nav(`/level/:courseId/:level`, {
                 state: { deptName, facultyName, facultyId }
               })}
               style={{
