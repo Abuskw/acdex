@@ -15,7 +15,8 @@ function Upload({ API, t, token, showToast }) {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
+const [courseCode, setCourseCode] = useState('')
+const [courseTitle, setCourseTitle] = useState('')
   useEffect(() => {
     fetch(`${API}/api/faculties`).then(r => r.json()).then(setFaculties)
     fetch(`${API}/api/courses`).then(r => r.json()).then(setAllCourses)
@@ -43,23 +44,42 @@ function Upload({ API, t, token, showToast }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!file) return setError('Please select a PDF file')
-    if (!course) return setError('Please select a course')
+    if (!courseCode) return setError('Please enter course code')
+if (!courseTitle) return setError('Please enter course title')
     if (!level) return setError('Please select a level')
     if (!token) {
       setError('Please login first')
       showToast('Please login first', 'error')
       return
     }
-    setUploading(true)
-    setError('')
-    setMessage('')
+   // Step 1: Create or find the course
+let finalCourseId
+try {
+  const courseRes = await fetch(`${API}/api/courses/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      code: courseCode.toUpperCase(),
+      title: courseTitle,
+      departmentId: dept,
+      level: parseInt(level)
+    })
+  })
+  const courseData = await courseRes.json()
+  finalCourseId = courseData.id
+} catch {
+  setError('Failed to create course')
+  setUploading(false)
+  return
+}
 
-    const formData = new FormData()
-    formData.append('pdf', file)
-    formData.append('title', title)
-    formData.append('weekNumber', week)
-    formData.append('courseId', course)
-    formData.append('academicYear', '2024/2025')
+// Step 2: Upload the PDF
+const formData = new FormData()
+formData.append('pdf', file)
+formData.append('title', title)
+formData.append('weekNumber', week)
+formData.append('courseId', finalCourseId)
+formData.append('academicYear', '2024/2025')
 
     try {
       const res = await fetch(`${API}/api/lectures/upload`, {
@@ -125,21 +145,26 @@ console.log('Server response:', data)
           </select>
         </div>
 
-        {/* Course */}
-        <div>
-          <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course of Study *</label>
-          <select value={course} onChange={e => setCourse(e.target.value)} disabled={!dept} required style={{
-            width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text
-          }}>
-            <option value="">Select Course</option>
-            {deptCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-          </select>
-        </div>
+       {/* Course Code */}
+<div>
+  <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course Code *</label>
+  <input type="text" value={courseCode} onChange={e => setCourseCode(e.target.value.toUpperCase())}
+    placeholder="e.g., MATH101" required
+    style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+</div>
+
+{/* Course Title */}
+<div>
+  <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course Title *</label>
+  <input type="text" value={courseTitle} onChange={e => setCourseTitle(e.target.value)}
+    placeholder="e.g., Mathematics" required
+    style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+</div>
 
         {/* Level */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Level *</label>
-          <select value={level} onChange={e => setLevel(e.target.value)} disabled={!course} required style={{
+          <select value={level} onChange={e => setLevel(e.target.value)} disabled={!dept} required style={{
             width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text
           }}>
             <option value="">Select Level</option>

@@ -16,6 +16,7 @@ function Faculty({ API, t }) {
     })
     fetch(`${API}/api/faculties/${id}/departments`).then(r => r.json()).then(d => {
       setDepartments(d)
+      // Fetch ALL courses fresh (not from cache)
       fetch(`${API}/api/courses`).then(r => r.json()).then(allCourses => {
         const deptIds = d.map(dept => dept.id)
         setCourses(allCourses.filter(c => deptIds.includes(c.departmentId)))
