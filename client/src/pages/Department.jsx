@@ -24,7 +24,8 @@ function Department({ API, t }) {
         { label: deptName || 'Department' }
       ]} />
 
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Select Level</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{deptName}</h2>
+      <p style={{ color: t.sub, fontSize: 13, marginBottom: 20 }}>Select your level</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {levels.map(level => {
@@ -32,24 +33,23 @@ function Department({ API, t }) {
           return (
             <button
               key={level}
-              onClick={() => nav(`/level/:courseId/:level`, {
+              onClick={() => nav(`/level/${id}/${level}`, {
                 state: { deptName, facultyName, facultyId }
               })}
               style={{
-                background: count > 0 ? t.card : 'transparent',
+                background: t.card,
                 border: `1px solid ${t.border}`,
                 borderRadius: 12,
                 padding: 20,
                 textAlign: 'center',
-                cursor: count > 0 ? 'pointer' : 'default',
-                color: count > 0 ? t.text : t.sub,
-                opacity: count > 0 ? 1 : 0.5,
+                cursor: 'pointer',
+                color: t.text,
                 fontSize: 16,
                 fontWeight: 600
               }}
             >
               {level} Level
-              <div style={{ fontSize: 12, fontWeight: 400, marginTop: 4 }}>{count} courses</div>
+              <div style={{ fontSize: 12, fontWeight: 400, marginTop: 4, color: t.sub }}>{count} courses</div>
             </button>
           )
         })}

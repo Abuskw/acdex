@@ -12,7 +12,7 @@ import Settings from './pages/Settings'
 import Upload from './pages/Upload'
 import Admin from './pages/Admin'
 import Levels from './pages/Levels'
-
+import Department from './pages/Department'
 const getCached = (key) => {
   try {
     const data = localStorage.getItem(key)
@@ -114,7 +114,7 @@ function App() {
           <Route path="/" element={<Home {...props} />} />
           <Route path="/faculty/:id" element={<Faculty {...props} />} />
           <Route path="/levels/:courseId" element={<Levels {...props} />} />
-          <Route path="/level/:courseId/:level" element={<Level {...props} />} />
+          <Route path="/level/:deptId/:level" element={<Level {...props} />} />
           <Route path="/course/:id" element={<Course {...props} />} />
           <Route path="/search" element={<Search {...props} />} />
           <Route path="/library" element={<Library {...props} />} />
@@ -123,7 +123,8 @@ function App() {
           <Route path="/admin" element={<Admin {...props} />} />
           // No department route!
 <Route path="/levels/:courseId" element={<Levels {...props} />} />
-<Route path="/level/:courseId/:level" element={<Level {...props} />} />
+
+<Route path="/department/:id" element={<Department {...props} />} />
         </Routes>
 
         <PDFViewer url={pdfUrl} title={pdfTitle} onClose={() => setPdfUrl(null)} />

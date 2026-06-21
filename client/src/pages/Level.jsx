@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 
 function Level({ API, t, showToast, setPdfUrl, setPdfTitle, user }) {
-  const { courseId, level } = useParams()
+  const { deptId, level } = useParams()
   const nav = useNavigate()
-  const [course, setCourse] = useState(null)
+  const [courses, setCourses] = useState([])
   const [lectures, setLectures] = useState([])
   const [loading, setLoading] = useState(true)
   const [showComments, setShowComments] = useState(false)
@@ -14,28 +14,31 @@ function Level({ API, t, showToast, setPdfUrl, setPdfTitle, user }) {
   const [commentCount, setCommentCount] = useState(0)
   const [replyTo, setReplyTo] = useState(null)
   const [replyText, setReplyText] = useState('')
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  
 
   useEffect(() => {
     setLoading(true)
-    fetch(`${API}/api/courses/${courseId}`)
-      .then(r => r.json())
-      .then(data => setCourse(data))
-      .catch(() => {})
-    
-    fetch(`${API}/api/courses/${courseId}/lectures`)
-      .then(r => r.json())
-      .then(data => {
-        setLectures(data)
+    setLectures([])
+    fetch(`${API}/api/courses`).then(r => r.json()).then(data => {
+      const filtered = data.filter(c => c.departmentId == deptId && c.level == level)
+      setCourses(filtered)
+      if (filtered.length === 0) {
         setLoading(false)
-        if (data.length > 0) {
-          fetch(`${API}/api/lectures/${data[0].id}/comments`)
-            .then(r => r.json())
-            .then(d => setCommentCount(d.length))
-        }
+        return
+      }
+      let loaded = 0
+      filtered.forEach(c => {
+        fetch(`${API}/api/courses/${c.id}/lectures`).then(r => r.json()).then(lec => {
+          setLectures(prev => {
+            const without = prev.filter(l => l.courseId !== c.id)
+            return [...without, ...lec.map(l => ({...l, courseId: c.id, courseCode: c.code}))]
+          })
+          loaded++
+          if (loaded >= filtered.length) setLoading(false)
+        }).catch(() => { loaded++; if (loaded >= filtered.length) setLoading(false) })
       })
-      .catch(() => setLoading(false))
-  }, [courseId, level])
+    }).catch(() => setLoading(false))
+  }, [deptId, level])
 
   const loadComments = async () => {
     if (lectures.length > 0) {
@@ -73,10 +76,10 @@ function Level({ API, t, showToast, setPdfUrl, setPdfTitle, user }) {
     setPdfTitle(lecture.title)
   }
 
-  const handleDownload = (lecture) => {
+  const handleDownload = (lecture, courseObj) => {
     window.open(`${API}/api/lectures/${lecture.id}/download`, '_blank')
     const dl = JSON.parse(localStorage.getItem('dl') || '[]')
-    dl.unshift({ title: lecture.title, code: course?.code || '', week: lecture.weekNumber, date: new Date().toLocaleDateString() })
+    dl.unshift({ title: lecture.title, code: courseObj?.code || '', week: lecture.weekNumber, date: new Date().toLocaleDateString() })
     localStorage.setItem('dl', JSON.stringify(dl.slice(0, 50)))
   }
 
@@ -86,41 +89,46 @@ function Level({ API, t, showToast, setPdfUrl, setPdfTitle, user }) {
     <div className="fade-in" style={{ padding: 16 }}>
       <button onClick={() => nav(-1)} style={{ background: 'transparent', border: 'none', color: t.accent, fontSize: 14, cursor: 'pointer', marginBottom: 16 }}>← Back</button>
       
-      {course && (
-        <div style={{ background: t.accent, color: 'white', padding: '14px 16px', borderRadius: 12, marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 4 }}>{course.code}</h2>
-          <p style={{ fontSize: 14, opacity: 0.9 }}>{course.title} | {level} Level</p>
-        </div>
-      )}
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>{level} Level Courses</h2>
 
-      <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Lectures ({lectures.length})</h3>
-
-      {lectures.length === 0 ? (
-        <p style={{ color: t.sub, textAlign: 'center', padding: 40 }}>No lectures for this course yet.</p>
+      {courses.length === 0 ? (
+        <p style={{ color: t.sub, textAlign: 'center', padding: 40 }}>No courses for this level yet.</p>
       ) : (
-        lectures.sort((a, b) => a.weekNumber - b.weekNumber).map(l => (
-          <div key={l.id} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <div>
-              <strong style={{ fontSize: 14 }}>Week {l.weekNumber}: {l.title}</strong>
-              <div style={{ fontSize: 12, color: t.sub }}>{l.academicYear}</div>
+        courses.map(course => {
+          const courseLecs = lectures.filter(l => l.courseId === course.id)
+          return (
+            <div key={course.id} style={{ marginBottom: 24 }}>
+              <div style={{ background: t.accent, color: 'white', padding: '10px 14px', borderRadius: 10, marginBottom: 8 }}>
+                <strong>{course.code}</strong> - {course.title}
+              </div>
+              {courseLecs.length === 0 ? (
+                <div style={{ padding: 12, color: t.sub, fontSize: 13, fontStyle: 'italic' }}>No lectures yet</div>
+              ) : (
+                courseLecs.sort((a, b) => a.weekNumber - b.weekNumber).map(l => (
+                  <div key={l.id} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <strong style={{ fontSize: 14 }}>Week {l.weekNumber}: {l.title}</strong>
+                      <div style={{ fontSize: 12, color: t.sub }}>{l.academicYear}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => handleView(l)} style={{ background: t.accent, color: 'white', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>View</button>
+                      <button onClick={() => { if (!user) { showToast('Please login first', 'error'); nav('/settings'); return } handleDownload(l, course) }} style={{ background: t.green, color: 'white', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Download</button>
+                      <button onClick={() => { if (!user) { showToast('Please login first', 'error'); nav('/settings'); return } const bm = JSON.parse(localStorage.getItem('bm') || '[]'); if (bm.find(b => b.title === l.title)) { showToast('Already saved'); return } bm.unshift({ title: l.title, code: course.code, week: l.weekNumber }); localStorage.setItem('bm', JSON.stringify(bm.slice(0, 50))); showToast('Saved!') }} style={{ background: 'transparent', border: `1px solid ${t.border}`, color: t.text, padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Save</button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => handleView(l)} style={{ background: t.accent, color: 'white', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>View</button>
-              <button onClick={() => { if (!user) { showToast('Please login first', 'error'); nav('/settings'); return } handleDownload(l) }} style={{ background: t.green, color: 'white', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Download</button>
-              <button onClick={() => { if (!user) { showToast('Please login first', 'error'); nav('/settings'); return } const bm = JSON.parse(localStorage.getItem('bm') || '[]'); if (bm.find(b => b.title === l.title)) { showToast('Already saved'); return } bm.unshift({ title: l.title, code: course?.code, week: l.weekNumber }); localStorage.setItem('bm', JSON.stringify(bm.slice(0, 50))); showToast('Saved!') }} style={{ background: 'transparent', border: `1px solid ${t.border}`, color: t.text, padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Save</button>
-            </div>
-          </div>
-        ))
+          )
+        })
       )}
 
-      {/* Comments Button */}
       <div style={{ marginTop: 24 }}>
         <button onClick={() => { setShowComments(true); loadComments() }} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 8, padding: '8px 16px', cursor: 'pointer', color: t.text, fontSize: 14 }}>
           💬 Comments ({commentCount})
         </button>
       </div>
 
-      {/* Bottom Sheet for Comments */}
       <BottomSheet open={showComments} onClose={() => { setShowComments(false); setReplyTo(null); setReplyText('') }} title="Discussion" t={t}>
         {user && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
