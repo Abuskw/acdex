@@ -286,7 +286,20 @@ app.get('/api/admin/analytics', adminAuth, (req, res) => {
     topCourses: db.prepare(`SELECT c.code, c.title, COUNT(l.id) as lectureCount FROM courses c LEFT JOIN lectures l ON l.courseId=c.id GROUP BY c.id ORDER BY lectureCount DESC LIMIT 5`).all()
   });
 });
-
+// Reset database
+app.get('/api/seed', (req, res) => {
+  db.pragma('foreign_keys = OFF');
+  db.prepare('DELETE FROM lectures').run();
+  db.prepare('DELETE FROM comments').run();
+  db.prepare('DELETE FROM ratings').run();
+  db.prepare('DELETE FROM bookmarks').run();
+  db.prepare('DELETE FROM reports').run();
+  db.prepare('DELETE FROM courses').run();
+  db.prepare('DELETE FROM departments').run();
+  db.prepare('DELETE FROM faculties').run();
+  db.pragma('foreign_keys = ON');
+  res.json({ message: 'Reset done. Restart server to re-seed.' });
+});
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
