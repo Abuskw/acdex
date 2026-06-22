@@ -7,6 +7,7 @@ function Upload({ API, t, token, showToast }) {
   const [fac, setFac] = useState('')
   const [dept, setDept] = useState('')
   const [course, setCourse] = useState('')
+  const [courseCode, setCourseCode] = useState('')
   const [level, setLevel] = useState('')
   const [title, setTitle] = useState('')
   const [week, setWeek] = useState('')
@@ -35,6 +36,7 @@ function Upload({ API, t, token, showToast }) {
     e.preventDefault()
     if (!file) return setError('Please select a PDF')
     if (!course) return setError('Please select a course')
+    if (!courseCode) return setError('Please enter course code')
     if (!level) return setError('Please select a level')
     if (!token) { setError('Please login first'); return }
     
@@ -42,9 +44,12 @@ function Upload({ API, t, token, showToast }) {
     setError('')
     setMessage('')
 
+    // Combine course code with lecture title
+    const fullTitle = `${courseCode} - ${title}`
+
     const formData = new FormData()
     formData.append('pdf', file)
-    formData.append('title', title)
+    formData.append('title', fullTitle)
     formData.append('weekNumber', week)
     formData.append('courseId', course)
     formData.append('academicYear', '2024/2025')
@@ -59,6 +64,7 @@ function Upload({ API, t, token, showToast }) {
       if (res.ok) {
         setMessage('Uploaded successfully!')
         setTitle('')
+        setCourseCode('')
         setWeek('')
         setFile(null)
         setFac('')
@@ -85,6 +91,8 @@ function Upload({ API, t, token, showToast }) {
       {error && <div style={{ background: '#fef2f2', color: '#dc2626', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 14 }}>{error}</div>}
       
       <form onSubmit={handleSubmit} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, display: 'grid', gap: 12 }}>
+        
+        {/* Faculty */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Faculty *</label>
           <select value={fac} onChange={e => handleFac(e.target.value)} required style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }}>
@@ -92,6 +100,8 @@ function Upload({ API, t, token, showToast }) {
             {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </div>
+
+        {/* Department */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Department *</label>
           <select value={dept} onChange={e => setDept(e.target.value)} disabled={!fac} required style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }}>
@@ -99,13 +109,25 @@ function Upload({ API, t, token, showToast }) {
             {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </div>
+
+        {/* Course Title (from seed data) */}
         <div>
-          <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course *</label>
+          <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course of Study *</label>
           <select value={course} onChange={e => setCourse(e.target.value)} disabled={!dept} required style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }}>
             <option value="">Select Course</option>
-            {deptCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title}</option>)}
+            {deptCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
           </select>
         </div>
+
+        {/* Course Code (real code like CHM101) */}
+        <div>
+          <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Course Code *</label>
+          <input type="text" value={courseCode} onChange={e => setCourseCode(e.target.value.toUpperCase())}
+            placeholder="e.g., CHM101" required
+            style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+        </div>
+
+        {/* Level */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Level *</label>
           <select value={level} onChange={e => setLevel(e.target.value)} required style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }}>
@@ -113,21 +135,39 @@ function Upload({ API, t, token, showToast }) {
             <option value="100">100</option><option value="200">200</option><option value="300">300</option><option value="400">400</option>
           </select>
         </div>
+
         <hr style={{ border: 'none', borderTop: `1px solid ${t.border}` }} />
+
+        {/* Lecture Title */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Lecture Title *</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="e.g., Introduction" style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} required
+            placeholder="e.g., Introduction to Chemistry"
+            style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+          {courseCode && title && (
+            <p style={{ fontSize: 11, color: t.sub, marginTop: 4 }}>Will save as: <strong>{courseCode} - {title}</strong></p>
+          )}
         </div>
+
+        {/* Week Number */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>Week Number *</label>
-          <input type="number" value={week} onChange={e => setWeek(e.target.value)} required placeholder="1" min="1" max="20" style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
+          <input type="number" value={week} onChange={e => setWeek(e.target.value)} required
+            placeholder="1" min="1" max="20"
+            style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, color: t.text }} />
         </div>
+
+        {/* PDF File */}
         <div>
           <label style={{ fontSize: 13, color: t.sub, marginBottom: 4, display: 'block' }}>PDF File *</label>
           <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0])} required style={{ color: t.text }} />
           {file && <p style={{ fontSize: 12, color: t.sub, marginTop: 4 }}>{file.name}</p>}
         </div>
-        <button type="submit" disabled={uploading} style={{ background: uploading ? t.border : t.accent, color: 'white', border: 'none', padding: 14, borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginTop: 8 }}>
+
+        <button type="submit" disabled={uploading} style={{
+          background: uploading ? t.border : t.accent, color: 'white', border: 'none',
+          padding: 14, borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginTop: 8
+        }}>
           {uploading ? 'Uploading...' : 'Upload Lecture'}
         </button>
       </form>
